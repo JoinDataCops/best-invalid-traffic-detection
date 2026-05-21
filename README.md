@@ -1,413 +1,312 @@
-# Best invalid traffic detection in 2026: an honest field map by role, not by feature
+# Best invalid traffic detection
 
-Every 'best invalid traffic detection' page on Google page one makes the same mistake. They line up DoubleVerify next to ClickCease next to TrafficGuard next to IPQS as if they're the same product. They aren't. They aren't even in the same product category. A publisher buying DoubleVerify is solving a different problem than a Shopify advertiser buying ClickCease, and a developer pulling IPQS via API is solving a third one entirely.
+**Roughly one in five web ad interactions in 2026 is invalid.** Pixalate's Q1 2026 benchmark puts web invalid traffic near 20%, mobile near 39%, CTV near 25%. The IAB's average lands more conservative at 8 to 12%. **Either way, you are paying for traffic that was never a person.**
 
-The SERP keeps merging them because feature lists rhyme. Everyone says 'detects bots'. Everyone has 'machine learning'. Everyone has a pricing page that hides the actual number. So the buyer reads three reviews, picks the loudest brand, and ends up with a publisher tool when they needed an advertiser tool, or vice versa.
+I have spent years watching marketing teams shop for invalid traffic detection and still get burned. The tool was usually fine. The mental model was broken. They bought a tool that catches invalid traffic at one point in the funnel and assumed they were covered everywhere. They were not.
 
-This piece is the honest split.
+**Invalid traffic is not one problem with one fix.** It enters at the impression, at the click, and at the conversion. Most "best invalid traffic detection" lists only deal with the first two. **The conversion layer, where Google Smart Bidding and Meta Advantage+ actually learn, is the one that gets skipped, and it is the one that costs you the most.**
 
-IVT in 2026 is officially an AI-bot problem. DoubleVerify clocked a 140% YoY rise in CTV fraud schemes in Q1 2026. Fraudlogix measured 20.64% global IVT across 105.7B impressions in 2025. Pixalate measured CTV IVT at 19% in the US, 21% globally. Lunio's 2026 launch flagged 24% invalid affiliate traffic and $2.8B in US affiliate click-fraud losses. Numbers vary because methodologies vary, and the methodology gap is itself a buying signal.
-
-The market has split into three buyer brackets. Pick the bracket first, then pick the tool.
-
----
+This is not a definitions post. This is a buyer's post. We will get GIVT and SIVT straight, then rank 18 tools by which layer of invalid traffic they genuinely catch. DataCops is in here because it works at the conversion-API layer most of the field ignores. Its job is architectural: first-party collection, [bot filtering](/fraud-traffic-validation) at ingestion, before the data leaves your infrastructure. See also [click fraud protection 2026](/resources/best-click-fraud-protection-2026).
 
 ## Quick stuff people keep asking
 
-**What is the best invalid traffic detection tool?** Depends on whether you're a publisher (MRC-accredited matters), a performance advertiser (filter IVT before it pollutes Smart Bidding matters), or a dev team (API-first, signal-level access matters). Same word, three different brackets.
+**What is invalid traffic?** Any ad traffic that did not come from a real human with real intent. Bots, crawlers, data-center traffic, click farms, accidental clicks, and a fast-growing share of AI agents crawling the web. The MRC's term for it is IVT, and it splits into two grades.
 
-**What's the difference between GIVT and SIVT?** GIVT (general invalid traffic) is the easy stuff: known bots, declared crawlers, datacenter IPs. SIVT (sophisticated invalid traffic) is the hard stuff: residential proxies, headless browsers spoofing user agents, AI-driven click farms. Most static IP blocklists catch GIVT and miss 95-99% of SIVT, per practitioners.
+**What's the difference between GIVT and SIVT?** GIVT, general invalid traffic, is the obvious stuff: known bots, spiders, data-center IPs. You filter it with a list. SIVT, sophisticated invalid traffic, is the hard stuff: hijacked devices, residential-proxy bots, malware-driven traffic, fake humans built to pass as real. GIVT you catch with rules. SIVT you have to detect with behavior, fingerprinting, and IP reputation, because the easy signals are gone.
 
-**How does invalid traffic detection work?** Some combination of IP reputation, browser fingerprinting (canvas, WebGL, audio, fonts, screen), behavioral signals (mouse movement, time-on-page, click cadence), and ML pattern matching against known fraud signatures. The good ones do all four.
+**How is invalid traffic detected?** Three places. Pre-bid, scoring inventory before an impression is bought. Post-bid, measuring after delivery. And site-side, filtering your own first-party traffic as it arrives. Most invalid traffic vendors do pre-bid and post-bid on the media side. Very few touch the site-side event stream that feeds your analytics and your ad platforms.
 
-**Is DoubleVerify MRC accredited?** Yes, across multiple measurement categories. As of April 2026, DoubleVerify added MRC accreditation for TikTok video viewability reporting too. MRC accreditation is the publisher-side credential that buyers like CPG brands look for.
+**What is an acceptable invalid traffic rate?** There is no zero. GIVT under roughly 2% and total IVT in the single digits is considered healthy. But the rate you see is only the rate your tool can detect. A tool that watches one layer reports a number that ignores the others.
 
-**Can invalid traffic be blocked in real-time?** Yes for advertiser-side click fraud (ClickCease, TrafficGuard, Lunio block at the ad-platform IP-exclusion layer in near real-time). Mostly no for impression-side IVT, where measurement happens after the fact and the value comes from refund or makegood.
+**Does Google detect invalid traffic for me?** Partially. Google filters obvious GIVT out of [Google Ads](/google-conversion-api) billing. It does that for its own billing integrity, not your data quality. SIVT that converts still flows into your analytics and still trains your bidding models. Treating Google's invalid-click filter as full protection is the most common mistake I see.
+
+**Can invalid traffic be detected in real-time?** Yes, and it has to be. AI-agent traffic is exploding, rule lists go stale fast, and a tool that scores traffic the next day cannot stop a bot conversion from being sent. Real-time, at ingestion, is the only place you stop contamination before it spreads.
+
+**What does MRC accreditation mean?** The Media Rating Council independently audits a vendor's IVT detection methodology and accredits the ones that pass. DoubleVerify, IAS, and Pixalate carry it. It verifies their measurement is sound. It does not mean they cover your first-party conversion layer, because that sits outside the accredited scope.
+
+## The layer that poisons your bidding
+
+Follow one bot through your funnel. It sees your ad. A pre-bid tool may or may not have filtered that impression, because pre-bid only covers monitored programmatic inventory. The bot clicks. A click-time tool might block that click from Google Ads, if you own one and it covers that channel. The bot lands on your site. It fires a page view, maybe a form fill, maybe an "add to cart". That event hits [GA4](/alternative/ga4-alternative). And then it fires to Meta [CAPI](/conversion-api) or Google Enhanced Conversions as a conversion.
+
+That last step is the one that hurts. The bot did not just burn a click. It registered as a conversion. And the ad platforms do not optimize against your clean dashboard. They optimize against the conversion stream. Every bot conversion is a labeled training example that says "go find more users like this".
+
+This is Layer 4 and Layer 5 of the real problem. Layer 4: of the analytics that does get collected, industry testing puts 24 to 31% of it as bot-generated. Layer 5: that contaminated, human-thin data trains Meta and Google to chase more bots, [ROAS](/resources/facebook-roas-improvement-guide-from-black-box-to-profit-engine) slides, and you raise budgets to hold the same revenue. Garbage in, garbage optimized, garbage out.
+
+Here is the proof, and it is real. PillarlabAI set a honeypot on a signup flow. Three thousand signups arrived. Seventy-seven percent were fraud. The majority, not a fringe. And 650 of those accounts came back to a single device fingerprint. One machine wearing 650 faces. If those signups had fired as conversions to an ad platform, that platform would have spent the next month building lookalike audiences off one bot farm. That is what invalid traffic does at the conversion layer when nobody filters there.
+
+The root cause is not a weak tool. It is architecture. Third-party scripts collect human and bot traffic blended together, with no isolation, and ship it off your infrastructure before anything filters it. The fix is to filter at the source: first-party collection, bot detection at ingestion, two data tiers separated before the data ever reaches an ad platform.
+
+## Tool rankings
+
+Eighteen tools, sorted by which layer of invalid traffic each one genuinely catches. Value for money is out of 10. Pricing is the published number where one exists; where it does not, that absence is the finding.
+
+### Tier 1: conversion-layer filtering
+
+**DataCops.**
+
+**What it is:** a first-party data platform that runs analytics and ad-platform delivery on your own subdomain, with bot filtering built into ingestion.
+
+**What it does well:** it works at the conversion layer the rest of this list mostly skips. Traffic is scored against a 361.8 billion-plus IP reputation database before events go to Meta, Google, TikTok, or LinkedIn through CAPI. It separates two data tiers at the source, anonymous session analytics that flow unconditionally and identifiable data that needs consent, so invalid-traffic filtering and compliance are not at war. SignUp Cops adds identity intelligence at signup, the exact point where PillarlabAI-style fraud enters.
+
+**Where it breaks:** DataCops is the newer brand on this list. It lacks the 15-year category weight of an IAS or DoubleVerify, and SOC 2 Type II is still in progress, so a regulated enterprise buyer may need to wait for it. The shared-CAPI capability is in verification, not fully live. And DataCops surfaces context on suspicious traffic rather than promising to block every bot. Honest read: it is the strongest answer on conversion-layer invalid traffic and the only tool here built around it, but it is not your enterprise WAF-grade programmatic auditor.
+
+**Value for money:** 9/10.
+
+**Pricing:** free tier includes 2,000 signup verifications per month; paid plans scale from there.
+
+### Tier 2: enterprise bot management (infrastructure)
+
+Excellent at blocking bots before they generate site events. None of them touch the consent layer or the conversion signal after the click.
+
+**HUMAN Security.**
+
+**What it is:** the largest pure-play human-verification platform, 15 trillion verifications a week, incorporating the old PerimeterX technology.
+
+**What it does well:** collective-intelligence detection at unmatched scale across web, mobile, API, and account-takeover, with a MediaGuard product that genuinely targets ad fraud.
+
+**Where it breaks:** it ends at the bot verdict. It classifies traffic human or bot and acts, but has no view of what happens to a real human's data downstream. If your consent script is blocked on 30 to 40% of EU sessions, HUMAN surfaces none of that loss. Pricing is custom enterprise, volume-based, and Gartner reviewers flag bill shocks during traffic spikes. The post-2022 PerimeterX merger left a confusing six-product portfolio.
+
+**Value for money:** 6/10.
+
+**Pricing:** custom enterprise, estimated $50k to $200k-plus per year.
+
+**PerimeterX.**
+
+**What it is:** no longer a standalone product. It fully merged into HUMAN Security in 2022.
+
+**What it does well:** its code-sensor and Human Challenge technology lives on inside the HUMAN Defense Platform, still strong on client-side bot detection.
+
+**Where it breaks:** evaluating "PerimeterX" in 2026 means evaluating HUMAN, and rebuilding what PerimeterX did in one product now takes several HUMAN SKUs. Legacy customers also inherited HUMAN's volume-surge [pricing](/pricing). No standalone product, no standalone pricing.
+
+**Value for money:** 5/10.
+
+**Pricing:** subsumed into HUMAN's custom enterprise pricing.
+
+**DataDome.**
+
+**What it is:** real-time AI bot management at the CDN edge across web, mobile, and API.
+
+**What it does well:** in-memory ML classification with endpoint-specific models on higher tiers, genuinely enterprise-grade against scraping and credential stuffing.
+
+**Where it breaks:** it intercepts requests below the consent layer, so it has no mechanism for sessions lost to "Reject All" and no visibility into [CMP](/first-party-consent-manager-platform) script failures. It blocks bots before they convert, which helps, but there is no native CAPI integration to clean signals already sent. Essentials starts at $3,830 a month, and mobile and API protection only unlock at the $8,670 Advanced tier.
+
+**Value for money:** 5/10.
+
+**Pricing:** Essentials $3,830/mo, Advanced $8,670/mo, Premium $10,160/mo, Enterprise from $13,270/mo.
+
+**Imperva.**
+
+**What it is:** a mature WAF with Advanced Bot Protection bundled in, for teams that want one security vendor.
+
+**What it does well:** adaptive behavioral bot detection at the edge inside a full DDoS-plus-WAF stack.
+
+**Where it breaks:** it ends at the application security perimeter. Visitor data in the analytics and consent layers downstream is invisible to it. The bot module is an add-on, and the WAF is reportedly the stronger half. Bot verdicts never flow into GA4 or [Meta CAPI](/meta-conversion-api), so marketing gets no invalid-traffic visibility. App Protect starts around $1,000 a month.
+
+**Value for money:** 5/10.
+
+**Pricing:** App Protect from ~$1,000/mo, enterprise from ~$6,000-plus/mo, no self-serve.
+
+**Kasada.**
+
+**What it is:** bot management built on economic deterrence, making bot execution computationally expensive rather than pattern-matching.
+
+**What it does well:** genuinely effective against sophisticated SIVT that evades signature detection; raised $20M in 2026 for agentic-AI defense.
+
+**Where it breaks:** it ends at the network-request verdict, with no marketing dashboard and no flow of bot insight into your analytics or ad platforms. The deterrence model also works best against high-volume sophisticated attacks; cheap low-volume bot farms that still contaminate analytics are less deterred. Pricing is enterprise-only, nothing published.
+
+**Value for money:** 5/10.
+
+**Pricing:** custom enterprise, no published rates, no free trial.
+
+### Tier 3: MRC-accredited media verification (impression-side)
+
+The gold standard for verifying the media buy. All three stop at the impression and never see what happens to the data after the click.
+
+**DoubleVerify.**
+
+**What it is:** the MRC-accredited standard for ad verification, measuring viewability, brand safety, and IVT across 15-plus channels.
+
+**What it does well:** MRC-accredited GIVT and SIVT detection at global scale, with a 2026 AI SlopStopper for AI-generated low-quality social placements.
+
+**Where it breaks:** it ends at the ad impression. It confirms a human saw a brand-safe ad; it cannot tell you that human then hit a page where the analytics script was blocked. Pre-bid segments reduce bot conversions but DV does not clean first-party conversion signals already sent. CPM-based pricing, no published rate card; the April 2025 rate-card change reached enterprises via DSP notifications.
+
+**Value for money:** 6/10.
+
+**Pricing:** no published pricing, CPM-based, enterprise only.
+
+**Integral Ad Science (IAS).**
+
+**What it is:** the other half of the MRC-accredited verification duopoly across display, video, CTV, social, and programmatic.
+
+**What it does well:** MRC-accredited IVT detection with deep DSP integrations and independent global measurement.
+
+**Where it breaks:** the same impression-side tunnel vision as DoubleVerify. An IAS-verified campaign can still pour clicks into a site where the consent script is blocked by Brave, and IAS will never flag it. Buyers describe the IAS-versus-DV choice as a forced "pick one" decided by DSP relationships. No published pricing.
+
+**Value for money:** 6/10.
+
+**Pricing:** no published pricing, CPM-based, enterprise only.
+
+**Pixalate.**
+
+**What it is:** MRC-accredited IVT detection across CTV, mobile, and web programmatic with strong supply-chain transparency.
+
+**What it does well:** 40-plus fraud and IVT types, Q1 2026 benchmarks across 82 billion-plus impressions.
+
+**Where it breaks:** it ends at the programmatic impression inside the exchange and never touches your first-party event stream. A publisher whose analytics script is blocked by uBlock for 25 to 35% of users is invisible to Pixalate, so even the "clean" impressions it certifies feed models trained on incomplete audiences. Self-serve API tiers only expose aggregated reports.
+
+**Value for money:** 6/10.
+
+**Pricing:** self-serve API $99, $299, $499/mo; enterprise custom; free plan capped at 100 calls/month.
+
+**GeoEdge.**
+
+**What it is:** publisher-side ad security, blocking malvertising, auto-redirects, and cryptojacking across web, in-app, and CTV.
+
+**What it does well:** real-time creative-quality protection for publisher revenue and user experience.
+
+**Where it breaks:** it is a publisher tool, and this is an advertiser's question. GeoEdge detects ad-level fraud but gives the advertiser paying for those impressions no view of their own traffic quality. Its rule-based filters were built for traditional malvertising, not the AI-generated synthetic traffic that jumped from 2 million to 25 million attacks a day in a year per Thales' 2026 report.
+
+**Value for money:** 6/10.
+
+**Pricing:** tiered with a free single-site plan; advanced coverage custom-quoted.
+
+### Tier 4: forensic and full-funnel fraud detection
+
+**CHEQ.**
+
+**What it is:** full-funnel go-to-market security, 2,000-plus bot tests per session from ad click to CRM.
+
+**What it does well:** one of the strongest infrastructure-grade detection stacks, and the January 2025 Deduce acquisition added a 185-million-user identity graph. It explicitly blocks invalid traffic before it reaches CAPI.
+
+**Where it breaks:** it ends at fraud classification with no visibility into consent-layer loss, so a [CHEQ](/alternative/cheq-alternative) customer can still be silently losing 30 to 40% of EU analytics. Enterprise spend jumped 43.91% year over year per SpendHound's 160-customer dataset, with no published rate card.
+
+**Value for money:** 6/10.
+
+**Pricing:** no published pricing; SMB ~$16k/year, enterprise ~$61k/year per customer reports.
+
+**Anura.**
+
+**What it is:** a forensic fraud-detection overlay analyzing 130-plus data points per visitor, claiming 99.999% accuracy with near-zero false positives.
+
+**What it does well:** one of the most rigorous detectors available, and it integrates with ad platforms to strip invalid traffic before conversion signals send, which genuinely protects ROAS.
+
+**Where it breaks:** Anura Script must load on the page to classify it. On the 30 to 40% of EU sessions where script blockers are active, it may never fire, and that visit falls through unclassified. No native CMP integration. Pricing is custom and unpublished.
+
+**Value for money:** 7/10.
+
+**Pricing:** custom usage-based per-request; free trial available.
+
+**Hitprobe.**
+
+**What it is:** defensive web analytics plus click-fraud detection in one session-based platform.
+
+**What it does well:** fraud blocking and analytics visibility together, with fingerprinting, IP analysis, and behavioral signals across paid and organic traffic, and a free tier.
+
+**Where it breaks:** it ends at the fraud report. It shows which sessions were fraudulent but does not automatically remediate the ad-platform conversion data; there is no native CAPI integration, so closing the loop is manual work. Session-based billing means a bot attack spikes your bill.
+
+**Value for money:** 6/10.
+
+**Pricing:** Free (50 sessions, 1 site), Growth $80/mo, Enterprise $490/mo flat.
+
+### Tier 5: SMB click-fraud protection (narrow channel)
+
+Honest, affordable tools doing one job. Read the channel scope, because that is where buyers get surprised.
+
+**ClickPatrol.**
+
+**What it is:** a four-module SMB click-fraud stack, AdProtector, AudienceProtector, DataProtector, FormProtector, under €100 a month.
+
+**What it does well:** the most complete SMB stack here. DataProtector cleans conversion data before it reaches Google Smart Bidding and Meta Advantage+, so ClickPatrol genuinely targets the algo-poisoning vector most cheap tools ignore.
+
+**Where it breaks:** it is PPC-only. A brand with 60% organic traffic leaves 60% of its analytics, CRM, and email traffic unmonitored. Plans bill annually behind a monthly-looking price, and enterprise teams hit feature ceilings.
+
+**Value for money:** 8/10.
+
+**Pricing:** from €59/mo, billed annually with a 17% discount, 7-day free trial.
+
+**ClickGUARD.**
+
+**What it is:** [ClickGUARD](/alternative/clickguard-alternative) 2.0, rebranded October 2025, real-time click-fraud detection across Google, Meta, and Microsoft Ads.
+
+**What it does well:** behavioral analysis beyond IP blacklisting and AI-powered cross-platform reporting, protecting 3,000-plus companies.
+
+**Where it breaks:** Meta protection is still coarser than Google and generates more false positives. It blocks fraudulent clicks but does not integrate with CAPI or Enhanced Conversions to clean the conversion signal feeding lookalike models. No organic or direct traffic coverage.
+
+**Value for money:** 7/10.
+
+**Pricing:** three tiers, $89 to $199/mo, free trial.
+
+**Click Guardian.**
+
+**What it is:** straightforward Google Ads click-fraud protection for SMBs, no contracts, transparent tiers.
+
+**What it does well:** device fingerprinting, VPN and Tor detection, and a proprietary threat network cover the basics without an enterprise sales cycle.
+
+**Where it breaks:** Google Ads only. Bots that click once and never repeat still pass through and contaminate GA4 and CAPI. The $500/month ceiling flips to opaque custom pricing for high spenders.
+
+**Value for money:** 5/10.
+
+**Pricing:** $45 to $500/mo tiered, custom above $200k/mo ad spend, 7-day free trial.
+
+**Fraud Blocker.**
+
+**What it is:** the most accessible self-serve click-fraud tool in the SMB market, set up in under 30 minutes.
+
+**What it does well:** transparent tiers, no sales calls, 100-plus detection signals, automated Google Ads IP exclusion.
+
+**Where it breaks:** Google Ads only, so bots on Meta, TikTok, or Microsoft campaigns contaminate analytics and CAPI unimpeded. It uses rule-based pattern matching, not a dynamic ML model, so sophisticated bots that match no pattern pass through, and that gap widens.
+
+**Value for money:** 6/10.
+
+**Pricing:** ~$79 to $349/mo, ~$55 to $69/mo on annual billing, 7-day free trial.
+
+### Off-axis but worth knowing
+
+**Singular.**
+
+**What it is:** a mobile measurement partner combining [attribution](/resources/cross-channel-attribution-setup-bridging-the-silos), cost aggregation from 2,000-plus networks, and IVT detection.
+
+**What it does well:** built for the post-cookie mobile world, native SKAdNetwork support, mobile IVT detection bundled at no extra cost, which directly protects app-install ROAS. Strong for a mobile-first brand.
+
+**Where it breaks:** it is a mobile tool. Web-channel attribution still rests on click-through URLs and pixels as vulnerable to bots, blockers, and consent loss as any web analytics. SKAN privacy thresholds can withhold 40 to 60% of low-volume campaign events.
+
+**Value for money:** 8/10.
+
+**Pricing:** free starter, Growing team at $0.05/conversion, IVT detection included on all paid plans.
+
+**Adverity.**
+
+**What it is:** a marketing data-integration platform with 600-plus connectors feeding harmonized dashboards.
+
+**What it does well:** the connector library and ETL layer are mature and fast for cross-channel reporting.
+
+**Where it breaks:** it is a pipe, not a filter. Adverity ingests whatever GA4 and Meta report as truth and does zero IVT filtering. A campaign running 8 to 12% invalid traffic shows up perfectly healthy in an Adverity dashboard. Paying $30k to $200k a year to harmonize bot-inclusive data does not make the data clean.
+
+**Value for money:** 4/10.
+
+**Pricing:** quote-only, direct contracts from ~$30k/year.
+
+## Decision guide
+
+- You run paid ads and your real worry is bot conversions training Smart Bidding: you need conversion-layer filtering. DataCops.
+- You want [signup fraud](/signup-cops) caught before [fake accounts](/resources/best-fake-account-detection-2026) hit your ad platform: DataCops with SignUp Cops, free for the first 2,000 verifications a month.
+- You are an enterprise that needs WAF, DDoS, and bot management from one vendor: Imperva.
+- You need the deepest infrastructure-grade bot blocking and budget is not the constraint: HUMAN Security or DataDome.
+- You are fighting sophisticated, high-volume SIVT specifically: Kasada.
+- You are a media buyer who needs MRC-accredited impression verification for reporting: DoubleVerify or IAS.
+- You are auditing programmatic supply-chain fraud: Pixalate.
+- You are an SMB that wants full-funnel PPC fraud cleaning on a budget: ClickPatrol.
+- You want simple, cheap Google-only click-fraud protection: [Fraud Blocker](/alternative/fraud-blocker-alternative) or Click Guardian.
+- You are mobile-first and need app IVT plus attribution in one tool: Singular.
+
+## You are measuring invalid traffic, not stopping it
+
+Here is the mistake almost everyone makes. You buy an invalid traffic tool, watch the dashboard, see the bot percentage hold steady, and call it solved. But measuring invalid traffic and stopping it from poisoning your bidding are two different jobs. Most of this list does the first. Almost none of it does the second.
+
+A bot got blocked from your Google Ads. Fine. Did its conversion event still fire to Meta CAPI? If you do not know, the honest answer is probably yes. And each of those events is a vote, cast in your name, telling an algorithm to find more bots.
+
+Open your conversion stream, not your dashboard. Of every conversion you sent to Meta and Google in the last 30 days, how many can you prove came from a human? If you cannot put a number on it, you do not have invalid traffic detection. You have an invalid traffic report. And your ROAS already knows the difference.
 
 ---
 
-## Bracket 1: Publisher and brand-side measurement (MRC accreditation matters)
-
-This bracket is for publishers selling inventory and brands buying programmatic at scale. The credential that matters is MRC accreditation, because it's what advertisers use to validate the impressions they paid for. The buyer is usually media operations, not the performance team.
-
-**1. DoubleVerify**
-
-The Good: MRC-accredited across many measurement categories, recently added TikTok video viewability accreditation in April 2026. Q1 2026 revenue $181M (+10% YoY) per the May 2026 earnings call. CTV measurement impressions +28% YoY. Strong CTV fraud research, the 140% YoY CTV scheme rise number is theirs.
-
-Frustrations: Publisher-tier pricing. Procurement-heavy contracts. Reporting-first product, not a real-time blocker for performance advertisers. The dashboard is built for media ops review, not for a paid-search team trying to keep Smart Bidding clean.
-
-Wish List: A genuinely advertiser-side product, not a brand-suitability dashboard relabeled.
-
-Value for Money: **7.5/10** for publishers and brands. **5/10** if you're a Shopify advertiser thinking 'IVT' means 'click fraud on my Google Ads'.
-
-Pricing: Enterprise contracts. Quote-based.
-
----
-
-**2. Integral Ad Science (IAS)**
-
-The Good: MRC accreditation. Mature category presence. Long advertiser relationships.
-
-Frustrations: PE transition under Novacap is a real 2026 procurement risk. Customers report support and roadmap uncertainty during ownership changes. Same publisher-side tilt as DoubleVerify, less suited for direct response advertisers.
-
-Wish List: Stable ownership. Clearer advertiser-side product.
-
-Value for Money: **7/10** for the publisher bracket, with the Novacap caveat factored in.
-
-Pricing: Enterprise, quote-based.
-
----
-
-**3. Pixalate**
-
-The Good: Strong CTV and mobile reporting. Q4 2025 benchmarks: US CTV IVT 19%, Canada 16%, global 21% across 103B+ programmatic impressions. Useful research output. MRC accredited.
-
-Frustrations: Reporting depth is publisher-shaped. Less actionable for an advertiser running real-time bid filtering.
-
-Wish List: A truly advertiser-side companion product.
-
-Value for Money: **7/10**. Strong publisher tool, narrower fit outside that bracket.
-
-Pricing: Quote-based.
-
----
-
-**4. Comscore**
-
-The Good: Long-running measurement brand, MRC accreditation, integrates with major ad servers.
-
-Frustrations: Same publisher-side category as the rest. Not designed for direct response.
-
-Wish List: Lighter-weight integration for mid-market.
-
-Value for Money: **6.5/10** for publishers.
-
-Pricing: Enterprise.
-
----
-
-**5. Moat (Oracle)**
-
-The Good: MRC accredited. Decent video viewability and IVT reporting. Long history.
-
-Frustrations: Oracle Advertising's broader strategy uncertainty has affected roadmap velocity. Procurement complexity inherited from Oracle.
-
-Wish List: Decoupled product roadmap.
-
-Value for Money: **6/10**.
-
-Pricing: Enterprise.
-
----
-
-## Bracket 2: Performance advertiser side (conversion-data hygiene matters)
-
-This is where most of the search intent for 'best invalid traffic detection' actually sits. The buyer is a paid-search or paid-social manager who is watching Smart Bidding learn from bot conversions and seeing CPA drift while spend stays flat. The credential that matters here is not MRC. It's whether the tool blocks IVT before it reaches your first-party conversion store and your Meta or Google CAPI.
-
-**6. ClickCease (now CHEQ)**
-
-The Good: Mature Google Ads integration. IP exclusion lists update in near real-time. Long customer base in PPC agencies.
-
-Frustrations: 12-month lock-ins are common. Some users report that the IP exclusion list is the only real lever, which is a layer-1 GIVT defense, not a layer-2 SIVT one. CHEQ acquisition has changed support patterns.
-
-Wish List: Server-side blocking, not just IP exclusion. Shorter contracts.
-
-Value for Money: **6.5/10**. Solid for SMB Google Ads accounts that just need IP exclusions automated.
-
-Pricing: From around $59/mo and up by spend tier. 12-month contracts common.
-
----
-
-**7. Lunio**
-
-The Good: 2026 affiliate fraud product launch (May 2026) is the first serious affiliate-side IVT detector at this price point. Reports 8.51% global IVT in 2025 across paid channels, methodology disclosed. UI is clean and operator-friendly.
-
-Frustrations: Affiliate launch is new, less customer feedback to verify performance. Pricing scales with spend, which can be unpredictable.
-
-Wish List: Standalone API. Consolidated reporting across paid channels and affiliate.
-
-Value for Money: **7/10**. Strong product, particularly for affiliate-heavy accounts.
-
-Pricing: Spend-percentage tiers, request a quote.
-
----
-
-**8. TrafficGuard**
-
-The Good: Multi-channel coverage (Google, Meta, Bing, mobile app install). Server-side fraud detection on app-install attribution is genuinely strong.
-
-Frustrations: Spend-percentage pricing creates a procurement headache when monthly spend swings. Some operators report difficulty reconciling TrafficGuard's numbers with platform-side numbers.
-
-Wish List: Flat pricing tiers. Better reconciliation tooling.
-
-Value for Money: **7/10** for app-install advertisers and multi-channel teams.
-
-Pricing: Spend-percentage based. Quote-based.
-
----
-
-**9. ClickGUARD**
-
-The Good: Direct-response Google Ads tool. Decent rule builder. Fair pricing for SMB.
-
-Frustrations: Largely IP-exclusion based, like ClickCease. Less coverage on Meta or programmatic.
-
-Wish List: Cross-channel coverage.
-
-Value for Money: **6/10**.
-
-Pricing: From around $59/mo by spend.
-
----
-
-**10. PPC Protect**
-
-The Good: Simple, low-friction onboarding. Decent for solo operators.
-
-Frustrations: Smaller customer base, narrower channel coverage. Same IP-exclusion-first category.
-
-Wish List: Real-time signal feed, not just retroactive exclusion.
-
-Value for Money: **6/10**.
-
-Pricing: From around $30/mo.
-
----
-
-**11. Click Guardian**
-
-The Good: Plain-English UI. Solo operator friendly.
-
-Frustrations: UK-focused customer base, smaller engineering team. Coverage outside Google Ads is light.
-
-Wish List: Broader channel support.
-
-Value for Money: **5.5/10**.
-
-Pricing: Tiered by spend.
-
----
-
-**12. Fraud Blocker**
-
-The Good: Affordable. Easy onboarding. Specifically built for SMB Google Ads.
-
-Frustrations: Same IP-exclusion category. Less depth than the bigger tools.
-
-Wish List: Behavioral signals beyond IP.
-
-Value for Money: **6/10**.
-
-Pricing: From $79/mo.
-
----
-
-**13. ClickPatrol**
-
-The Good: Simple onboarding. Reasonable price.
-
-Frustrations: Limited coverage outside Google Ads. Smaller research output than Lunio or TrafficGuard.
-
-Wish List: Cross-channel.
-
-Value for Money: **5.5/10**.
-
-Pricing: Tiered.
-
----
-
-**14. Hitprobe**
-
-The Good: API-first option for the smaller end of advertiser spend.
-
-Frustrations: Smaller market footprint. Less independent benchmarking.
-
-Wish List: Bigger fraud signal coverage.
-
-Value for Money: **5.5/10**.
-
-Pricing: Tiered.
-
----
-
-**15. Anura**
-
-The Good: Real-time fraud scoring, good integrations across paid and lead-gen. Well-respected in the affiliate fraud bracket.
-
-Frustrations: Pricing can scale steeply. Less brand visibility than the bigger players, which makes procurement harder.
-
-Wish List: Public benchmarks.
-
-Value for Money: **7/10**.
-
-Pricing: Quote-based.
-
----
-
-**16. Forensiq (Impact)**
-
-The Good: Strong affiliate side detection, owned by Impact, long-standing product.
-
-Frustrations: Mostly bundled with Impact's affiliate platform. Less standalone purchase path.
-
-Wish List: Standalone API access.
-
-Value for Money: **6/10** standalone, higher inside Impact.
-
-Pricing: Bundled with Impact.
-
----
-
-**17. GeoEdge**
-
-The Good: Specifically detects malicious creatives and ad-quality issues, not just IVT. Strong for publishers monetizing display.
-
-Frustrations: Adjacent category to IVT, often confused with it. Less helpful for performance advertisers.
-
-Wish List: Clearer positioning.
-
-Value for Money: **6.5/10** in its actual category.
-
-Pricing: Quote-based.
-
----
-
-**18. Singular**
-
-The Good: Mobile measurement and attribution platform with built-in fraud detection.
-
-Frustrations: Mobile-first, less helpful for web-side advertisers. The fraud detection is one feature among many.
-
-Wish List: Web-side parity.
-
-Value for Money: **6.5/10** for mobile teams.
-
-Pricing: Enterprise.
-
----
-
-**19. Adverity**
-
-The Good: Data integration platform with fraud signals as part of the broader pipeline.
-
-Frustrations: Not really an IVT tool, more an integration platform. Often shows up in lists by mistake.
-
-Wish List: Stop being listed as a fraud tool.
-
-Value for Money: **6/10** in its actual category.
-
-Pricing: Enterprise.
-
----
-
-**20. DataCops**
-
-The Good: Filters bots, VPNs, proxies, and Tor before they hit your analytics or your server-side CAPI calls. Indexes 361.8B+ IPs across residential, datacenter, VPN, and proxy categories, with 146.4B datacenter IPs alone. The architecture is the differentiator. Most advertiser-side tools block at the ad-platform IP exclusion layer (post-click, pre-conversion). DataCops blocks at the analytics and CAPI egress layer, so bot-driven conversions never enter your first-party store and never reach Meta or Google CAPI. Smart Bidding learns from clean conversions, not bot-poisoned ones. Setup is one script tag and one CNAME, live in 5 to 30 minutes. Free tier is real (2,000 sessions/mo, no card).
-
-Frustrations: Brand new compared to DoubleVerify or ClickCease. SOC 2 Type II is in progress, not active. Smaller integration catalog than enterprise CDPs. Won't help a publisher trying to satisfy MRC accreditation requirements (different bracket).
-
-Wish List: SOC 2 finished. The DSAR API plus downstream deletion to Meta and Google (currently planned, honestly disclosed). MRC-grade publisher reporting (currently not the focus, by design).
-
-Value for Money: **8/10** for performance advertisers who need conversion-data hygiene. Not the right tool for publishers needing MRC accreditation.
-
-Pricing: Free for 2,000 sessions/mo. Growth $7.99/mo for 5,000 sessions plus unlimited Meta and Google CAPI. Business $49/mo for 50,000 sessions. Organization $299/mo for 300,000 sessions. Enterprise Talk to Sales for dedicated runtime and dedicated IP database.
-
----
-
-## Bracket 3: Dev and API-first (signal-level access matters)
-
-This is for engineering teams who don't want a dashboard. They want a JSON response with a fraud score, latency under 100ms, and pricing per call. The credential that matters is signal coverage and uptime, not brand recognition.
-
-**21. IPQualityScore (IPQS)**
-
-The Good: Mature API. Wide signal coverage (IP, email, phone, fingerprint). Decent docs. Affordable for the volume.
-
-Frustrations: False positive rates require tuning. Not a finished product, more a signal source you build around.
-
-Wish List: Better tuning UI. Larger residential proxy database.
-
-Value for Money: **7.5/10** for dev teams that want signals, not a dashboard.
-
-Pricing: Pay-per-call tiers.
-
----
-
-**22. Fraudlogix**
-
-The Good: API-first. Strong public reporting, the 20.64% global IVT 2026 number is theirs. Decent ad-tech focus.
-
-Frustrations: Smaller than IPQS in raw signal volume. Reporting brand stronger than the API brand.
-
-Wish List: Larger product surface.
-
-Value for Money: **6.5/10**.
-
-Pricing: Pay-per-call.
-
----
-
-## Bracket 4: Sometimes-listed-as-IVT-but-actually-not
-
-These keep showing up in 'best IVT' lists and shouldn't. They solve adjacent problems.
-
-**23. Imperva**
-
-WAF and bot management for application traffic, not ad traffic. Different problem, often the right product, almost never the right answer to 'IVT detection'.
-
-**24. PerimeterX (now HUMAN Security)**
-
-Application bot management. Same category as Imperva. HUMAN does have ad-side products too via the BotGuard for Advertising line, but the core is application security.
-
-**25. Shape Security (now F5)**
-
-Application bot detection on login/signup flows. Not IVT in the ad-tech sense.
-
-**26. DataDome**
-
-Application bot management. Same.
-
-**27. Kasada**
-
-Application bot management. Same.
-
-**28. HUMAN Security**
-
-Does have an ad-side product (formerly White Ops), useful for sophisticated programmatic IVT. The application-side product is more visible in the market.
-
-These are real products, just not in the 'IVT detection' bracket the way most search intent uses the phrase.
-
----
-
-## So what should you actually use?
-
-Want MRC-accredited measurement for a publisher or major brand? Try DoubleVerify, IAS, or Pixalate.
-
-Want to stop click fraud on Google Ads with IP exclusion automation? Try ClickCease, ClickGUARD, or Fraud Blocker.
-
-Want multi-channel ad fraud filtering with affiliate coverage? Try Lunio or TrafficGuard.
-
-Want signal-level fraud data via API for a custom build? Try IPQS or Fraudlogix.
-
-Want to filter IVT before it reaches your first-party analytics and CAPI, so Smart Bidding learns from clean conversions? Try DataCops.
-
-Want application bot management on signup or login? Try DataDome, HUMAN, or Kasada.
-
----
-
-## The mistake I see people make
-
-They treat IVT detection as a one-bucket purchase. They read a 'best of' list, see DoubleVerify and ClickCease in the same row, and pick the one with the bigger logo. Six months later they discover their performance team can't action DoubleVerify reports because they're built for media ops, or their media ops team can't use ClickCease because it doesn't cover programmatic. The tool was wrong for the role.
-
-The second mistake: assuming static IP blocklists catch SIVT. They don't. Practitioners report static IP blocking misses 95-99% of sophisticated bots. The 2026 fraud landscape is AI-driven, residential-IP-routed, behaviorally simulated. A 2018-era IP blocklist isn't going to cover it.
-
-The third mistake: ignoring conversion-data hygiene. Most advertiser-side tools block clicks. None of them rewrite the conversion that Meta CAPI already received. So Smart Bidding still learns from the bot conversion. The IVT got blocked at the impression layer but reached the optimization layer anyway. The fix is filtering at the analytics and CAPI layer, not the click layer.
-
----
-
-## Now your turn
-
-What bracket are you actually in? Publisher chasing MRC accreditation, performance advertiser watching Smart Bidding drift, or dev team building a custom signal pipeline? The right tool changes by an order of magnitude depending on the answer. Drop the role and the channel. Happy to talk through which bracket the SERP is steering you wrong on.
-
----
-
-Research by [DataCops](https://www.joindatacops.com) · First-party tracking, consent infrastructure & fraud prevention.
+Research by [DataCops](https://www.joindatacops.com) — first-party tracking, consent infrastructure, fraud prevention, and server-side CAPI for Meta, Google, TikTok, and LinkedIn.
